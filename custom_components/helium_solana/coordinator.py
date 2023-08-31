@@ -14,7 +14,7 @@ from .api.backend import BackendAPI
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-UPDATE_INTERVAL = timedelta(minutes=30)
+UPDATE_INTERVAL = timedelta(minutes=10)
 
 
 class HeliumSolanaDataUpdateCoordinator(DataUpdateCoordinator[dict]):
@@ -38,4 +38,3 @@ class HeliumSolanaDataUpdateCoordinator(DataUpdateCoordinator[dict]):
         except RequestException as ex:
             _LOGGER.exception("Error retrieving helium stats from hotspotty")
             raise UpdateFailed(ex) from ex
-        return self.data
