@@ -147,7 +147,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["stats", "iot", "daily_average_rewards"],
                 "mdi:hand-coin-outline",
                 "IOT",
-                "float",
             )
         )
 
@@ -200,7 +199,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["stats", "mobile", "daily_average_rewards"],
                 "mdi:hand-coin-outline",
                 "MOBILE",
-                "float",
             )
         )
 
@@ -216,7 +214,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["epoch"],
                 "mdi:hand-coin-outline",
                 "Epoch",
-                "int",
             )
         )
         sensors.append(
@@ -228,7 +225,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["iot_dc_burned"],
                 "mdi:hand-coin-outline",
                 "IOT",
-                "int",
             )
         )
         sensors.append(
@@ -240,7 +236,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["iot_delegation_rewards_issued"],
                 "mdi:hand-coin-outline",
                 "IOT",
-                "int",
             )
         )
         sensors.append(
@@ -252,7 +247,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["iot_utility_score"],
                 "mdi:hand-coin-outline",
                 "Score",
-                "int",
             )
         )
         sensors.append(
@@ -264,7 +258,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["iot_vehnt_at_epoch_start"],
                 "mdi:hand-coin-outline",
                 "VeHNT",
-                "float",
             )
         )
 
@@ -277,7 +270,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["mobile_dc_burned"],
                 "mdi:hand-coin-outline",
                 "MOBILE",
-                "int",
             )
         )
         sensors.append(
@@ -289,7 +281,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["mobile_delegation_rewards_issued"],
                 "mdi:hand-coin-outline",
                 "MOBILE",
-                "int",
             )
         )
         sensors.append(
@@ -301,7 +292,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["mobile_utility_score"],
                 "mdi:hand-coin-outline",
                 "Score",
-                "int",
             )
         )
         sensors.append(
@@ -313,7 +303,6 @@ async def get_sensors(integration, wallet, prices, hass):
                 ["mobile_vehnt_at_epoch_start"],
                 "mdi:hand-coin-outline",
                 "VeHNT",
-                "float",
             )
         )
 
