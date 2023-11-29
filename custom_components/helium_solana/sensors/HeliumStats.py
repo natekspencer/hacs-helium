@@ -1,98 +1,98 @@
+"""Helium stats entity."""
+from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional
-from homeassistant.helpers.entity import (
-    Entity,
-    DeviceInfo
+from dataclasses import dataclass
+
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
-import requests
-from ..const import (
-    DOMAIN
-)
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-import logging
-_LOGGER = logging.getLogger(__name__)
+from ..const import DOMAIN
+from ..coordinator import HeliumSolanaDataUpdateCoordinator
 
 
-class HeliumStats(Entity):
-    """Helium Stats"""
-    def __init__(self, api, token, key, name, path, icon, uom, type='int'):
-        super().__init__()
-        self.api = api
-        self.token = token
-        self.key = key
-        self.path = path
-        self._available = True
-        self._icon = icon
-        self._unique_id = 'helium.stats.'+token+'_'+key.lower()
-        self.device_unique_id = 'helium.stats.'+token
-        self._name = 'Helium Stats '+token+' '+name
-        self.uom = uom
-        self.type = type
+@dataclass(kw_only=True)
+class HeliumStatSensorEntityDescription(SensorEntityDescription):
+    """Helium stat sensor entity description."""
 
-    @property
-    def name(self) -> str:
-        return self._name
+    token: str
 
-    @property
-    def unique_id(self) -> str:
-        return self._unique_id
 
-    @property
-    def available(self) -> bool:
-        return self._available
+def get_stat_sensor_descriptions(
+    token: str,
+) -> tuple[HeliumStatSensorEntityDescription]:
+    """Get stat sensor descriptions from token."""
+    return (
+        HeliumStatSensorEntityDescription(
+            key="total_hotspots",
+            name="Total Hotspots",
+            icon="mdi:router-wireless",
+            token=token,
+        ),
+        HeliumStatSensorEntityDescription(
+            key="active_hotspots",
+            name="Active Hotspots",
+            icon="mdi:router-wireless",
+            token=token,
+        ),
+        HeliumStatSensorEntityDescription(
+            key="total_cities", name="Total Cities", icon="mdi:city", token=token
+        ),
+        HeliumStatSensorEntityDescription(
+            key="total_countries", name="Total Countries", icon="mdi:earth", token=token
+        ),
+        HeliumStatSensorEntityDescription(
+            key="daily_average_rewards",
+            name="Daily Average Rewards",
+            icon="mdi:hand-coin-outline",
+            native_unit_of_measurement=token,
+            suggested_display_precision=5,
+            token=token,
+        ),
+    )
 
-    @property
-    def state(self) -> Optional[str]:
-        return self._state
 
-    @property
-    def icon(self) -> str | None:
-        return self._icon
-    
-    @property
-    def should_poll(self):
-        return True
+class HeliumStats(CoordinatorEntity[HeliumSolanaDataUpdateCoordinator], SensorEntity):
+    """Helium stats sensor entity."""
 
-    @property
-    def unit_of_measurement(self):
-        return self.uom
+    entity_description: HeliumStatSensorEntityDescription
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            identifiers={
-                # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self.device_unique_id)
-            },
-            name='Helium Stats '+self.token,
-            #node_name=self._name,
-            manufacturer='Helium'
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self,
+        coordinator: HeliumSolanaDataUpdateCoordinator,
+        entity_description: HeliumStatSensorEntityDescription,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(coordinator)
+        self.entity_description = entity_description
+
+        token = entity_description.token
+        device_id = f"helium.stats.{token}"
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            name=f"Helium Stats {token}",
+            manufacturer="Helium",
+            model=token,
         )
+        self._attr_unique_id = f"{device_id}_{entity_description.key.lower()}"
 
-    
-    async def async_update(self):
-        try:
+        self._set_native_value()
 
-            
-            response = await self.api.get_data('heliumstats')
+    def _set_native_value(self) -> None:
+        """Set native value."""
+        if data := self.coordinator.data:
+            desc = self.entity_description
+            self._attr_native_value = data["stats"][desc.token.lower()][desc.key]
 
-            if response.status_code != 200:
-                return
-            
-            value = response.json()
-            for key in self.path:
-                value = value[key]
-
-            if self.type == 'str':
-                value = str(value)
-            elif self.type == 'float':
-                value = float(value)
-            else:
-                value = int(value)
-            self._state = value
-            self._available = True
-
-        except (requests.exceptions.RequestException):
-            self._available = False
-            _LOGGER.exception("Error retrieving helium stats from hotspotty")
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._set_native_value()
+        return super()._handle_coordinator_update()
