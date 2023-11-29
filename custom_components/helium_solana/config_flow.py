@@ -1,41 +1,62 @@
-from homeassistant import config_entries
-from .const import DOMAIN, CONF_VERSION, CONF_WALLET, CONF_WALLET_COUNT, CONF_WALLETS, CONF_INTEGRATION, CONF_INTEGRATION_VALUES
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
+"""Config flow for Helium Solana integration."""
+from __future__ import annotations
 
-class HeliumSolanaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+from typing import Any
+
+from homeassistant.config_entries import ConfigFlow
+from homeassistant.data_entry_flow import FlowResult
+import voluptuous as vol
+
+from .const import (
+    CONF_INTEGRATION,
+    CONF_INTEGRATION_OPTIONS,
+    CONF_VERSION,
+    CONF_WALLET,
+    DOMAIN,
+    INTEGRATION_WALLET,
+)
+
+USER_SCHEMA = vol.Schema(
+    {vol.Required(CONF_INTEGRATION): vol.In(CONF_INTEGRATION_OPTIONS)}
+)
+WALLET_SCHEMA = vol.Schema({vol.Required(CONF_WALLET): str})
+
+
+class HeliumSolanaConfigFlow(ConfigFlow, domain=DOMAIN):
     """Example config flow."""
-    # The schema version of the entries that it creates
-    # Home Assistant will call your migrate method if the version changes
+
     VERSION = 2
 
+    data: dict[str, int | str] | None = None
+    title: str | None = None
 
- 
-    async def async_step_user(self, info):
-        if info is not None:
-            selected_integration_label = info[CONF_INTEGRATION]
-            selected_integration = [key for key, value in CONF_INTEGRATION_VALUES.items() if value == selected_integration_label]
-            if len(selected_integration) != 1:
-                return
-            selected_integration = selected_integration[0]
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle a flow initiated by the user."""
+        if user_input is not None:
+            selected_integration = user_input[CONF_INTEGRATION]
+
+            if selected_integration != INTEGRATION_WALLET:
+                self._async_abort_entries_match(user_input)
+
             self.data = {}
             self.data[CONF_VERSION] = self.VERSION
             self.data[CONF_INTEGRATION] = selected_integration
-            self.title = selected_integration_label
+            self.title = CONF_INTEGRATION_OPTIONS[selected_integration]
 
-            if selected_integration == 'wallet':
-                return self.async_show_form(
-                    step_id="wallet", data_schema=vol.Schema({vol.Required(CONF_WALLET): str})
-                )
-            
+            if selected_integration == INTEGRATION_WALLET:
+                return self.async_show_form(step_id="wallet", data_schema=WALLET_SCHEMA)
+
             return self.async_create_entry(title=self.title, data=self.data)
-        return self.async_show_form(
-            step_id="user", data_schema=vol.Schema({vol.Required(CONF_INTEGRATION): vol.In(CONF_INTEGRATION_VALUES.values())})
-        )
-    
-    async def async_step_wallet(self, info):
-   
-        self.data[CONF_WALLET] = info[CONF_WALLET]
-        self.title = self.title+' '+self.data[CONF_WALLET][0:4]
+
+        return self.async_show_form(step_id="user", data_schema=USER_SCHEMA)
+
+    async def async_step_wallet(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle the wallet flow."""
+        self.data[CONF_WALLET] = user_input[CONF_WALLET]
+        self._async_abort_entries_match(self.data)
+        self.title = f"{self.title} {self.data[CONF_WALLET][0:4]}"
         return self.async_create_entry(title=self.title, data=self.data)
-        
