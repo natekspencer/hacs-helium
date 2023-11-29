@@ -1,31 +1,46 @@
-import time
+"""Backend API."""
+from __future__ import annotations
+
 import asyncio
+import time
+from typing import Any
+
 import requests
-from ..const import BACKEND_URL, BACKEND_KEY
+
+from ..const import BACKEND_KEY, BACKEND_URL
+
 
 class BackendAPI:
-    def __init__(self, cache_ttl=600):
-        self._cache = {}
+    def __init__(self, cache_ttl: int = 600):
+        self._cache: dict[str, Any] = {}
         self._cache_ttl = cache_ttl
 
     @staticmethod
-    def http_client(path, payload=None, method='GET', headers=None):
-        # Make the HTTP request with the given URL, payload, method, and headers
-        response = requests.request(method, BACKEND_URL+'/'+path, json=payload, headers=headers)
-
-        # Raise an exception if the response was not successful
+    def http_client(
+        path: str,
+        payload: Any | None = None,
+        method: str = "GET",
+        headers: Any | None = None,
+    ) -> requests.Response:
+        """Make the HTTP request with the given URL, payload, method, and headers."""
+        response = requests.request(
+            method, BACKEND_URL + "/" + path, json=payload, headers=headers
+        )
         response.raise_for_status()
-
-        # Return the response
         return response
 
-    async def get_data(self, path, cache_key=None):
-        cache_key = cache_key or path  # Use the path as the cache key if no key is provided
+    async def get_data(
+        self, path: str, cache_key: str | None = None
+    ) -> requests.Response:
+        """Get the data from a path."""
+        cache_key = cache_key or path  # use path as cache key if cache key not provided
         now = time.time()
         cache_entry = self._cache.get(cache_key)
-        if cache_entry is None or now - cache_entry['time'] > self._cache_ttl:
-            headers =  {'Authorization': 'bearer '+BACKEND_KEY }
-            response = await asyncio.to_thread(self.http_client, path, None, 'GET', headers)
-            self._cache[cache_key] = {'data': response, 'time': now}
+        if cache_entry is None or now - cache_entry["time"] > self._cache_ttl:
+            headers = {"Authorization": "bearer " + BACKEND_KEY}
+            response = await asyncio.to_thread(
+                self.http_client, path, None, "GET", headers
+            )
+            self._cache[cache_key] = {"data": response, "time": now}
 
-        return self._cache[cache_key]['data']
+        return self._cache[cache_key]["data"]

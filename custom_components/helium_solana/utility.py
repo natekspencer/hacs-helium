@@ -1,8 +1,11 @@
-# utility.py
+"""Helium Solana integration utilities."""
+from __future__ import annotations
+
 import requests
 from requests.exceptions import RequestException
 
-def http_client(url, payload=None, method='GET', headers=None):
+
+def http_client(url, payload=None, method="GET", headers=None):
     try:
         # Make the HTTP request with the given URL, payload, method, and headers
         response = requests.request(method, url, json=payload, headers=headers)
@@ -16,6 +19,7 @@ def http_client(url, payload=None, method='GET', headers=None):
 
     # Return the response
     return response
+
 
 def title_case_and_replace_hyphens(input_string: str) -> str:
     return input_string.replace("-", " ").title()

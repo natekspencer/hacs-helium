@@ -21,7 +21,11 @@ from .const import (
     TOKEN_IOT,
     TOKEN_MOBILE,
 )
-from .coordinator import HeliumSolanaDataUpdateCoordinator
+from .coordinator import (
+    TOKEN_IDS,
+    HeliumPriceDataUpdateCoordinator,
+    HeliumSolanaDataUpdateCoordinator,
+)
 from .sensors.HeliumStats import HeliumStats, get_stat_sensor_descriptions
 from .sensors.HotspotReward import HotspotReward
 from .sensors.PriceSensor import PriceSensor
@@ -47,11 +51,11 @@ async def async_setup_entry(
     config = hass.data[DOMAIN][config_entry.entry_id]
     integration = config.get(CONF_INTEGRATION)
     wallet = config.get(CONF_WALLET)
-    sensors = await get_sensors(integration, wallet, None, hass)
+    sensors = await get_sensors(integration, wallet, hass)
     async_add_entities(sensors, update_before_add=True)
 
 
-async def get_sensors(integration, wallet, prices, hass):
+async def get_sensors(integration, wallet, hass):
     """Get sensors."""
     if integration == INTEGRATION_GENERAL_STATS:
         coordinator = HeliumSolanaDataUpdateCoordinator(hass, api_backend)
@@ -63,23 +67,15 @@ async def get_sensors(integration, wallet, prices, hass):
             for description in get_stat_sensor_descriptions(token)
         )
 
+    if integration == INTEGRATION_GENERAL_TOKEN_PRICE:
+        coordinator = HeliumPriceDataUpdateCoordinator(hass)
+        await coordinator.async_config_entry_first_refresh()
+
+        return (PriceSensor(coordinator, token_id) for token_id in TOKEN_IDS)
+
     sensors = []
 
-    if integration == INTEGRATION_GENERAL_TOKEN_PRICE:
-        sensors.append(PriceSensor(http_client, ADDRESS_IOT, "IOT", "helium-iot"))
-        sensors.append(
-            PriceSensor(http_client, ADDRESS_MOBILE, "MOBILE", "helium-mobile")
-        )
-        sensors.append(PriceSensor(http_client, ADDRESS_HNT, "HNT", "helium"))
-        sensors.append(
-            PriceSensor(http_client, ADDRESS_SOLANA, "SOLANA", "wrapped-solana")
-        )
-
-        if prices:
-            for price in prices:
-                sensors.append(PriceSensor(price))
-
-    elif integration == INTEGRATION_WALLET:
+    if integration == INTEGRATION_WALLET:
         sensors.append(
             WalletBalance(
                 api_backend, wallet, "hnt", ["balance", "hnt"], "HNT", "mdi:wallet"
