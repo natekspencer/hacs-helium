@@ -12,7 +12,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import DOMAIN
-from ..coordinator import HeliumSolanaDataUpdateCoordinator
+from ..coordinator import HeliumStatsDataUpdateCoordinator
 
 
 @dataclass(kw_only=True)
@@ -56,7 +56,7 @@ def get_stat_sensor_descriptions(
     )
 
 
-class HeliumStats(CoordinatorEntity[HeliumSolanaDataUpdateCoordinator], SensorEntity):
+class HeliumStats(CoordinatorEntity[HeliumStatsDataUpdateCoordinator], SensorEntity):
     """Helium stats sensor entity."""
 
     entity_description: HeliumStatSensorEntityDescription
@@ -66,7 +66,7 @@ class HeliumStats(CoordinatorEntity[HeliumSolanaDataUpdateCoordinator], SensorEn
 
     def __init__(
         self,
-        coordinator: HeliumSolanaDataUpdateCoordinator,
+        coordinator: HeliumStatsDataUpdateCoordinator,
         entity_description: HeliumStatSensorEntityDescription,
     ) -> None:
         """Initialize the entity."""

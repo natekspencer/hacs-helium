@@ -5,6 +5,9 @@ from datetime import timedelta
 import logging
 
 from homeassistant import config_entries, core
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.backend import BackendAPI
 from .const import (
@@ -18,13 +21,16 @@ from .const import (
     INTEGRATION_GENERAL_STATS,
     INTEGRATION_GENERAL_TOKEN_PRICE,
     INTEGRATION_WALLET,
+    TOKEN_HELIUM,
     TOKEN_IOT,
     TOKEN_MOBILE,
+    TOKEN_SOL,
 )
 from .coordinator import (
     TOKEN_IDS,
     HeliumPriceDataUpdateCoordinator,
-    HeliumSolanaDataUpdateCoordinator,
+    HeliumStatsDataUpdateCoordinator,
+    HeliumWalletDataUpdateCoordinator,
 )
 from .sensors.HeliumStats import HeliumStats, get_stat_sensor_descriptions
 from .sensors.HotspotReward import HotspotReward
@@ -43,10 +49,10 @@ api_backend = BackendAPI()
 
 
 async def async_setup_entry(
-    hass: core.HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
-    async_add_entities,
-):
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Setup Helium Solana sensors from a config entry."""
     config = hass.data[DOMAIN][config_entry.entry_id]
     integration = config.get(CONF_INTEGRATION)
@@ -55,10 +61,10 @@ async def async_setup_entry(
     async_add_entities(sensors, update_before_add=True)
 
 
-async def get_sensors(integration, wallet, hass):
+async def get_sensors(integration: str, wallet: str, hass: HomeAssistant):
     """Get sensors."""
     if integration == INTEGRATION_GENERAL_STATS:
-        coordinator = HeliumSolanaDataUpdateCoordinator(hass, api_backend)
+        coordinator = HeliumStatsDataUpdateCoordinator(hass, api_backend)
         await coordinator.async_config_entry_first_refresh()
 
         return (
@@ -76,31 +82,14 @@ async def get_sensors(integration, wallet, hass):
     sensors = []
 
     if integration == INTEGRATION_WALLET:
-        sensors.append(
-            WalletBalance(
-                api_backend, wallet, "hnt", ["balance", "hnt"], "HNT", "mdi:wallet"
-            )
+        coordinator = HeliumWalletDataUpdateCoordinator(hass, api_backend, wallet)
+        await coordinator.async_config_entry_first_refresh()
+
+        sensors.extend(
+            WalletBalance(coordinator, wallet, token)
+            for token in (TOKEN_HELIUM, TOKEN_IOT, TOKEN_MOBILE, TOKEN_SOL)
         )
-        sensors.append(
-            WalletBalance(
-                api_backend, wallet, "iot", ["balance", "iot"], "IOT", "mdi:wallet"
-            )
-        )
-        sensors.append(
-            WalletBalance(
-                api_backend, wallet, "sol", ["balance", "solana"], "SOL", "mdi:wallet"
-            )
-        )
-        sensors.append(
-            WalletBalance(
-                api_backend,
-                wallet,
-                "mobile",
-                ["balance", "mobile"],
-                "MOBILE",
-                "mdi:wallet",
-            )
-        )
+
         response = None
         try:
             response = await api_backend.get_data("hotspot-rewards2/" + str(wallet))

@@ -29,7 +29,9 @@ class PriceSensor(CoordinatorEntity[HeliumPriceDataUpdateCoordinator], SensorEnt
 
     _attr_attribution = "Powered by CoinGecko"
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 8
 
     def __init__(
         self, coordinator: HeliumPriceDataUpdateCoordinator, token_id: str

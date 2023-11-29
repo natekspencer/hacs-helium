@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from typing import Any
 
 import requests
 
 from ..const import BACKEND_KEY, BACKEND_URL
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BackendAPI:
@@ -37,6 +40,7 @@ class BackendAPI:
         now = time.time()
         cache_entry = self._cache.get(cache_key)
         if cache_entry is None or now - cache_entry["time"] > self._cache_ttl:
+            _LOGGER.debug("Refreshing data from %s", path)
             headers = {"Authorization": "bearer " + BACKEND_KEY}
             response = await asyncio.to_thread(
                 self.http_client, path, None, "GET", headers
