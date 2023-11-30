@@ -4,17 +4,12 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from homeassistant import config_entries, core
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.backend import BackendAPI
 from .const import (
-    ADDRESS_HNT,
-    ADDRESS_IOT,
-    ADDRESS_MOBILE,
-    ADDRESS_SOLANA,
     CONF_INTEGRATION,
     CONF_WALLET,
     DOMAIN,
@@ -39,7 +34,6 @@ from .sensors.PriceSensor import PriceSensor
 from .sensors.StakingRewardsPosition import StakingRewardsPosition
 from .sensors.StakingRewardsToken import StakingRewardsToken
 from .sensors.WalletBalance import WalletBalance
-from .utility import http_client
 
 _LOGGER = logging.getLogger(__name__)
 
