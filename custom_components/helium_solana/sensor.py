@@ -28,6 +28,7 @@ from .const import (
 )
 from .coordinator import (
     TOKEN_IDS,
+    HeliumHotspotDataUpdateCoordinator,
     HeliumPriceDataUpdateCoordinator,
     HeliumStatsDataUpdateCoordinator,
     HeliumWalletDataUpdateCoordinator,
@@ -86,90 +87,36 @@ async def get_sensors(integration: str, wallet: str, hass: HomeAssistant):
         await coordinator.async_config_entry_first_refresh()
 
         sensors.extend(
-            WalletBalance(coordinator, wallet, token)
+            WalletBalance(coordinator, token)
             for token in (TOKEN_HELIUM, TOKEN_IOT, TOKEN_MOBILE, TOKEN_SOL)
         )
 
-        response = None
-        try:
-            response = await api_backend.get_data("hotspot-rewards2/" + str(wallet))
-        except:
-            _LOGGER.exception("No hotspot rewards found")
+        coordinator = HeliumHotspotDataUpdateCoordinator(hass, api_backend, wallet)
+        await coordinator.async_config_entry_first_refresh()
 
-        if response and response.status_code == 200:
-            rewards = response.json()
-            # hotspots = len(rewards.rewards)
-            for hotspot_index in rewards["rewards"]:
-                hotspot_name = rewards["rewards"][hotspot_index]["name"]
-                hotspot_token = rewards["rewards"][hotspot_index]["token"]
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        hotspot_name,
-                        ["rewards", hotspot_index, "claimed_rewards"],
-                        "Claimed Rewards",
-                        hotspot_token,
-                        "mdi:hand-coin-outline",
-                    )
+        if rewards := coordinator.data:
+            sensors.extend(
+                HotspotReward(
+                    coordinator,
+                    rewards["rewards"][hotspot_index]["name"],
+                    ["rewards", hotspot_index, f"{reward_type}_rewards"],
+                    f"{reward_type.title()} Rewards",
+                    rewards["rewards"][hotspot_index]["token"],
                 )
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        hotspot_name,
-                        ["rewards", hotspot_index, "unclaimed_rewards"],
-                        "Unclaimed Rewards",
-                        hotspot_token,
-                        "mdi:hand-coin-outline",
-                    )
+                for hotspot_index in rewards["rewards"]
+                for reward_type in ("claimed", "unclaimed", "total")
+            )
+            sensors.extend(
+                HotspotReward(
+                    coordinator,
+                    wallet,
+                    ["rewards_aggregated", token, f"{reward_type}_rewards"],
+                    f"{reward_type.title()} Rewards",
+                    token,
                 )
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        hotspot_name,
-                        ["rewards", hotspot_index, "total_rewards"],
-                        "Total Rewards",
-                        hotspot_token,
-                        "mdi:hand-coin-outline",
-                    )
-                )
-
-            for token in rewards["rewards_aggregated"]:
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        wallet,
-                        ["rewards_aggregated", token, "claimed_rewards"],
-                        "Claimed Rewards",
-                        token,
-                        "mdi:hand-coin-outline",
-                    )
-                )
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        wallet,
-                        ["rewards_aggregated", token, "unclaimed_rewards"],
-                        "Unclaimed Rewards",
-                        token,
-                        "mdi:hand-coin-outline",
-                    )
-                )
-                sensors.append(
-                    HotspotReward(
-                        api_backend,
-                        wallet,
-                        wallet,
-                        ["rewards_aggregated", token, "total_rewards"],
-                        "Total Rewards",
-                        token,
-                        "mdi:hand-coin-outline",
-                    )
-                )
+                for token in rewards["rewards_aggregated"]
+                for reward_type in ("claimed", "unclaimed", "total")
+            )
 
         response = None
         try:

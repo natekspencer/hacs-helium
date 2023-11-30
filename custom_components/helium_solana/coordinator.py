@@ -90,3 +90,26 @@ class HeliumWalletDataUpdateCoordinator(DataUpdateCoordinator[dict]):
         except RequestException as ex:
             _LOGGER.exception("Error retrieving helium wallet balances")
             raise UpdateFailed(ex) from ex
+
+
+class HeliumHotspotDataUpdateCoordinator(DataUpdateCoordinator[dict]):
+    """Helium hotspot data update coordinator."""
+
+    def __init__(self, hass: HomeAssistant, api: BackendAPI, address: str) -> None:
+        """Initialize."""
+        self.api = api
+        self.address = address
+        super().__init__(
+            hass, _LOGGER, name="Helium hotspot", update_interval=UPDATE_INTERVAL
+        )
+
+    async def _async_update_data(self) -> dict | None:
+        """Fetch data from API endpoint."""
+        _LOGGER.debug("Requesting Helium stats data")
+        try:
+            response = await self.api.get_data(f"hotspot-rewards2/{self.address}")
+            if response.status_code == 200:
+                return response.json()
+        except RequestException as ex:
+            _LOGGER.exception("Error retrieving helium hotspot rewards")
+            raise UpdateFailed(ex) from ex

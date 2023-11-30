@@ -21,13 +21,13 @@ class WalletBalance(CoordinatorEntity[HeliumWalletDataUpdateCoordinator], Sensor
     _attr_state_class = SensorStateClass.TOTAL
 
     def __init__(
-        self, coordinator: HeliumWalletDataUpdateCoordinator, address: str, token: str
+        self, coordinator: HeliumWalletDataUpdateCoordinator, token: str
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
         self._token = token if token != TOKEN_SOL else "solana"
         key = token.lower()
-        address4 = address[:4]
+        address4 = coordinator.address[:4]
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"helium.wallet.{address4}")},
