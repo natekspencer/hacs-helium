@@ -1,4 +1,5 @@
 """Helium Solana Integration"""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -118,7 +119,7 @@ async def get_sensors(integration: str, wallet: str, hass: HomeAssistant):
         except:
             _LOGGER.exception("No staking rewards found")
 
-        if response.status_code == 200:
+        if response and response.status_code == 200:
             rewards = response.json()
             for delegated_position_key in rewards["rewards"]:
                 sensors.append(

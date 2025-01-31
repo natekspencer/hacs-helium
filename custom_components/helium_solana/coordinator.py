@@ -1,13 +1,15 @@
 """Helium solana data coordinator."""
+
 from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
 import logging
 
+from requests.exceptions import RequestException
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from requests.exceptions import RequestException
 
 from .api.backend import BackendAPI
 from .const import COINGECKO_PRICE_URL, CURRENCY_USD

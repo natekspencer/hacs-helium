@@ -3,7 +3,10 @@
     "step": {
       "user": {
         "title": "Select Integration",
-        "description": "Please select the integration you want to add."
+        "description": "Please select the integration you want to add.",
+        "data": {
+          "integration": "Integration"
+        }
       },
       "wallet": {
         "title": "Solana Wallet Address",
